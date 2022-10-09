@@ -18,7 +18,7 @@ Animate the depth of an object in camera space.
 __/__ Installation __/__
  
 Copy the script file into your maya scripts directory, for example:
-C:\Users\Escape\Documents\maya\scripts\emi_closerToCamera.py
+C:\Users\YourUser\Documents\maya\scripts\emi_closerToCamera.py
  
 Run the tool in a python shell or shelf button by importing the module, 
 and then calling the primary function:
