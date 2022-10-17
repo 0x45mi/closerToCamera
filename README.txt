@@ -5,7 +5,7 @@ Animate the depth of an object in camera space.
 Although the tool is called "Closer to camera", untruthfully to it's name, you can also animate objects going further away.
 Intended as a tweaker tool for later anim stages where timings have been established.
 
-It works best by selecting one controller as the target. However, the tool supports multi-controller selections, by calculating the mid point of the controllers.
+It works best by selecting one controller as the target. However, the tool supports multi-controller selections by calculating the mid point of the controllers.
 
    ___________________
 __/__ Installation __/__
