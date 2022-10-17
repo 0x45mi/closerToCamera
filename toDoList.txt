@@ -1,3 +1,2 @@
 only one window allowed
 
-immortal variables: pass the assumed variables into the class when you instantiate it.
