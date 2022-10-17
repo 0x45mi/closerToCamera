@@ -215,39 +215,37 @@ cmds.window(title="Closer to camera")
 cmds.columnLayout( columnAttach=('both', 0), adjustableColumn=True, rowSpacing=1)
 cmds.rowColumnLayout( numberOfColumns=3, columnWidth=[(1, 80), (2, 320), (3, 24)], rowOffset=[1, 'top', 2], rowSpacing=[(1,2)], adjustableColumn=2, columnAttach=[(1, 'both', 0), (2, 'both', 0), (3, 'both', 0)] )
 
-cmds.button("Load Camera", command='field_add("TF01", 1)', annotation='Select camera or pivot object to load. This field takes only one selection')    
+cmds.button("Load Camera", command=lambda *x:field_add("TF01", 1), annotation='Select camera or pivot object to load. This field takes only one selection')    
 cmds.textField('TF01', ed=False)
-cmds.iconTextButton(style="iconOnly", image='delete.png', command= 'field_clear("TF01")', annotation='Clear field')
-cmds.button("Load Objects", command='field_add("TF02", 0)', annotation='Select controls to load') 
+cmds.iconTextButton(style="iconOnly", image='delete.png', command=lambda *x:field_clear("TF01"), annotation='Clear field')
+cmds.button("Load Objects", command=lambda *x:field_add("TF02", 0), annotation='Select controls to load') 
 cmds.textField('TF02', ed=False)
-cmds.iconTextButton(style="iconOnly", image='delete.png', command= 'field_clear("TF02")', annotation='Clear field')
+cmds.iconTextButton(style="iconOnly", image='delete.png', command= lambda *x:field_clear("TF02"), annotation='Clear field')
 
 cmds.setParent( '..' )
 cmds.rowColumnLayout( numberOfColumns=1, columnWidth=[(1, 80)], adjustableColumn=1, columnAttach=[(1, 'both', 0)])
-cmds.button(label="Create!", command='scale_to_camera()', annotation='Create closer to camera setup')
+cmds.button(label="Create!", command=lambda *x:scale_to_camera(), annotation='Create closer to camera setup')
 
 cmds.separator() 
-cmds.textScrollList('TSL01', height=80, allowMultiSelection=False, selectCommand='pick_item()')
+cmds.textScrollList('TSL01', height=80, allowMultiSelection=False, selectCommand=lambda *x:pick_item())
 cmds.popupMenu()
-cmds.menuItem('Refresh', command='refresh_STL()')
-cmds.menuItem('Cleanup', command='cleanup()')
+cmds.menuItem('Refresh', command=lambda *x:refresh_STL())
+cmds.menuItem('Cleanup', command=lambda *x:cleanup())
 
 cmds.setParent( '..' )
 cmds.rowLayout(numberOfColumns=4, columnWidth4=(24, 350, 20, 24), adjustableColumn=2, columnAlign=(1, 'center'), columnAttach=[(1, 'left', 4), (2, 'both', 2), (3, 'both', 0), (4, 'right', 2)] )
 cmds.picture(image='Camera.png') 
-cmds.floatSlider('slideScale', enable=False, minValue=0.0, maxValue=2.0, step=.1, changeCommand='update_slider()')
+cmds.floatSlider('slideScale', enable=False, minValue=0.0, maxValue=2.0, step=.1, changeCommand=lambda *x:update_slider())
 
-cmds.iconTextButton(style='iconOnly', image='setKeyframe.png', height=19, annotation='Set Key', command='set_key()')
-cmds.iconTextButton(style='iconOnly', image='zeroKey.png', annotation='Set Zero Key', command='set_zero_key()')
+cmds.iconTextButton(style='iconOnly', image='setKeyframe.png', height=19, annotation='Set Key', command=lambda *x:set_key())
+cmds.iconTextButton(style='iconOnly', image='zeroKey.png', annotation='Set Zero Key', command=lambda *x:set_zero_key())
 
 cmds.setParent( '..' )
 cmds.paneLayout(configuration="vertical3")
-cmds.button('B04', label = "Toggle", command='enable_disable()', annotation='Toggle implicit control')
-cmds.button(label= "Bake", command='bake()', annotation='Bake changes to layer and delete setup')
-cmds.button(label="Delete", command='delete_setup(check_select())', annotation='Delete setup')
+cmds.button('B04', label = "Toggle", command=lambda *x:enable_disable(), annotation='Toggle implicit control')
+cmds.button(label= "Bake", command=lambda *x:bake(), annotation='Bake changes to layer and delete setup')
+cmds.button(label="Delete", command=lambda *x:delete_setup(check_select()), annotation='Delete setup')
 
 def ui():
     cmds.showWindow()
     refresh_STL()
-
-#test line git
