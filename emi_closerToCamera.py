@@ -1,9 +1,12 @@
 import maya.cmds as cmds
+import maya.mel as mm
 
 loadObjects = set()
 
 start = cmds.playbackOptions( q=True,ast=True );
 end  = cmds.playbackOptions( q=True,aet=True );
+
+gChannelBoxName = mm.eval('$temp=$gChannelBoxName')
 
 #colours
 green = [0.5, 0.8, 0.2]
@@ -53,7 +56,7 @@ def average_points():
         child= cmds.spaceLocator(name="scaleLoc_offset_"+ i)
         babies.append(child[0])        
         cmds.parentConstraint(i, child, mo=False)
-        cmds.parentConstraint(child, master, mo=False)
+        cmds.parentConstraint(i, master, mo=False)
 
     cmds.bakeResults(master, simulation=True, at=["tx","ty","tz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=True);
     
@@ -118,18 +121,24 @@ def cleanup():
         for n in get_ctrl(i):
             if cmds.listRelatives(n, children=True, type='pointConstraint'): pass
             else: delete_setup(i); break
-                
-def pick_item():  
+
+def check_select():
+    return(cmds.textScrollList("TSL01", query=True, selectItem=True))[0]
+
+def update_slider():
+    attr_val = cmds.getAttr(check_select()+ '.ScaleToCamera')
+    max_val = attr_val*2
+    cmds.floatSlider( "slideScale", edit=True, maxValue=max_val)   
+    
+def pick_item():
     cmds.select(check_select())
     cmds.connectControl('slideScale', check_select()+'.ScaleToCamera')
     update_slider()
     if cmds.getAttr(pointAttr()) == 0: cmds.button("B04", edit=True, label="Control OFF", enableBackground=True, backgroundColor=red)
     elif cmds.getAttr(pointAttr()) == 1: cmds.button("B04", edit=True, label="Control ON", enableBackground=True, backgroundColor=green)
-        
-def update_slider():
-    attr_val = cmds.getAttr(check_select()+ '.ScaleToCamera')
-    max_val = attr_val*2
-    cmds.floatSlider( "slideScale", edit=True, maxValue=max_val)
+
+    #it's not a bug, it's a *feature*
+    cmds.channelBox(gChannelBoxName , edit=True, select=(True, check_select()+".ScaleToCamera"))
     
 def set_key():
     cmds.setKeyframe(check_select()+ '.ScaleToCamera')
@@ -142,9 +151,6 @@ def delete_setup(item):
     cmds.delete(getTop(item))
     refresh_STL()
     
-def check_select():
-    return(cmds.textScrollList("TSL01", query=True, selectItem=True))[0]
-
 def getTop(node):
     topNode = ''
     par = cmds.listRelatives(node, p=True)
@@ -209,43 +215,47 @@ def enable_disable():
  
     
 #_________________UI__________________#
- 
-cmds.window(title="Closer to camera")
-
-cmds.columnLayout( columnAttach=('both', 0), adjustableColumn=True, rowSpacing=1)
-cmds.rowColumnLayout( numberOfColumns=3, columnWidth=[(1, 80), (2, 320), (3, 24)], rowOffset=[1, 'top', 2], rowSpacing=[(1,2)], adjustableColumn=2, columnAttach=[(1, 'both', 0), (2, 'both', 0), (3, 'both', 0)] )
-
-cmds.button("Load Camera", command=lambda *x:field_add("TF01", 1), annotation='Select camera or pivot object to load. This field takes only one selection')    
-cmds.textField('TF01', ed=False)
-cmds.iconTextButton(style="iconOnly", image='delete.png', command=lambda *x:field_clear("TF01"), annotation='Clear field')
-cmds.button("Load Objects", command=lambda *x:field_add("TF02", 0), annotation='Select controls to load') 
-cmds.textField('TF02', ed=False)
-cmds.iconTextButton(style="iconOnly", image='delete.png', command= lambda *x:field_clear("TF02"), annotation='Clear field')
-
-cmds.setParent( '..' )
-cmds.rowColumnLayout( numberOfColumns=1, columnWidth=[(1, 80)], adjustableColumn=1, columnAttach=[(1, 'both', 0)])
-cmds.button(label="Create!", command=lambda *x:scale_to_camera(), annotation='Create closer to camera setup')
-
-cmds.separator() 
-cmds.textScrollList('TSL01', height=80, allowMultiSelection=False, selectCommand=lambda *x:pick_item())
-cmds.popupMenu()
-cmds.menuItem('Refresh', command=lambda *x:refresh_STL())
-cmds.menuItem('Cleanup', command=lambda *x:cleanup())
-
-cmds.setParent( '..' )
-cmds.rowLayout(numberOfColumns=4, columnWidth4=(24, 350, 20, 24), adjustableColumn=2, columnAlign=(1, 'center'), columnAttach=[(1, 'left', 4), (2, 'both', 2), (3, 'both', 0), (4, 'right', 2)] )
-cmds.picture(image='Camera.png') 
-cmds.floatSlider('slideScale', enable=False, minValue=0.0, maxValue=2.0, step=.1, changeCommand=lambda *x:update_slider())
-
-cmds.iconTextButton(style='iconOnly', image='setKeyframe.png', height=19, annotation='Set Key', command=lambda *x:set_key())
-cmds.iconTextButton(style='iconOnly', image='zeroKey.png', annotation='Set Zero Key', command=lambda *x:set_zero_key())
-
-cmds.setParent( '..' )
-cmds.paneLayout(configuration="vertical3")
-cmds.button('B04', label = "Toggle", command=lambda *x:enable_disable(), annotation='Toggle implicit control')
-cmds.button(label= "Bake", command=lambda *x:bake(), annotation='Bake changes to layer and delete setup')
-cmds.button(label="Delete", command=lambda *x:delete_setup(check_select()), annotation='Delete setup')
 
 def ui():
+    if cmds.window('emi_closerToCamera', exists=True):
+        cmds.deleteUI('emi_closerToCamera')
+
+ 
+    cmds.window('emi_closerToCamera', title="Closer to camera")
+
+    cmds.columnLayout( columnAttach=('both', 0), adjustableColumn=True, rowSpacing=1)
+    cmds.rowColumnLayout( numberOfColumns=3, columnWidth=[(1, 80), (2, 320), (3, 24)], rowOffset=[1, 'top', 2], rowSpacing=[(1,2)], adjustableColumn=2, columnAttach=[(1, 'both', 0), (2, 'both', 0), (3, 'both', 0)] )
+
+    cmds.button("Load Camera", command=lambda *x:field_add("TF01", 1), annotation='Select camera or pivot object to load. This field takes only one selection')    
+    cmds.textField('TF01', ed=False)
+    cmds.iconTextButton(style="iconOnly", image='delete.png', command=lambda *x:field_clear("TF01"), annotation='Clear field')
+    cmds.button("Load Objects", command=lambda *x:field_add("TF02", 0), annotation='Select controls to load') 
+    cmds.textField('TF02', ed=False)
+    cmds.iconTextButton(style="iconOnly", image='delete.png', command= lambda *x:field_clear("TF02"), annotation='Clear field')
+
+    cmds.setParent( '..' )
+    cmds.rowColumnLayout( numberOfColumns=1, columnWidth=[(1, 80)], adjustableColumn=1, columnAttach=[(1, 'both', 0)])
+    cmds.button(label="Create!", command=lambda *x:scale_to_camera(), annotation='Create closer to camera setup')
+
+    cmds.separator() 
+    cmds.textScrollList('TSL01', height=80, allowMultiSelection=False, selectCommand=lambda *x:pick_item())
+    cmds.popupMenu()
+    cmds.menuItem('Refresh', command=lambda *x:refresh_STL())
+    cmds.menuItem('Cleanup', command=lambda *x:cleanup())
+
+    cmds.setParent( '..' )
+    cmds.rowLayout(numberOfColumns=4, columnWidth4=(24, 350, 20, 24), adjustableColumn=2, columnAlign=(1, 'center'), columnAttach=[(1, 'left', 4), (2, 'both', 2), (3, 'both', 0), (4, 'right', 2)] )
+    cmds.picture(image='Camera.png') 
+    cmds.floatSlider('slideScale', enable=False, minValue=0.0, maxValue=2.0, step=.1, changeCommand=lambda *x:update_slider())
+
+    cmds.iconTextButton(style='iconOnly', image='setKeyframe.png', height=19, annotation='Set Key', command=lambda *x:set_key())
+    cmds.iconTextButton(style='iconOnly', image='zeroKey.png', annotation='Set Zero Key', command=lambda *x:set_zero_key())
+
+    cmds.setParent( '..' )
+    cmds.paneLayout(configuration="vertical3")
+    cmds.button('B04', label = "Toggle", command=lambda *x:enable_disable(), annotation='Toggle implicit control')
+    cmds.button(label= "Bake", command=lambda *x:bake(), annotation='Bake changes to layer and delete setup')
+    cmds.button(label="Delete", command=lambda *x:delete_setup(check_select()), annotation='Delete setup')
+
     cmds.showWindow()
     refresh_STL()
