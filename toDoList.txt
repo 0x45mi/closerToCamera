@@ -1,2 +1,3 @@
 only one window allowed
 
+select scaleToCamera attribute and sync timeline and graph editor... on scroll list select or on slider change? Maybe both?
