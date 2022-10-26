@@ -3,8 +3,8 @@ import maya.mel as mm
 
 loadObjects = set()
 
-start = cmds.playbackOptions( q=True,ast=True );
-end  = cmds.playbackOptions( q=True,aet=True );
+start = cmds.playbackOptions( q=True, min=True )
+end  = cmds.playbackOptions( q=True, max=True )
 
 gChannelBoxName = mm.eval('$temp=$gChannelBoxName')
 
@@ -85,6 +85,7 @@ def scale_to_camera():
                 objPosition = cmds.xform(i, q=True,t=True,ws=True)
                 cmds.xform(locator, ws=True, translation=objPosition)
                 cmds.pointConstraint(i, locator, mo=True)
+                cmds.orientConstraint(i, locator, mo=False)
                 locators.append(locator[0])
             elif i != lista[0]:
                 locator = cmds.spaceLocator(name= "scaleLoc_" + i)
@@ -98,8 +99,8 @@ def scale_to_camera():
         
         for i in locators:
             cmds.select(i, add=True);        
-        cmds.bakeResults(simulation=True, at=["tx","ty","tz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=False);
-        cmds.delete(cmds.listRelatives(locators[0], allDescendents=True, type='pointConstraint')) 
+        cmds.bakeResults(simulation=True, at=["tx","ty","tz","rx","ry","rz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=False);
+        cmds.delete(cmds.listRelatives(locators[0], allDescendents=True, type='constraint')) 
         lista.pop(0)
         
         for i in lista:

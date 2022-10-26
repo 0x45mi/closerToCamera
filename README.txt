@@ -1,5 +1,5 @@
    __________________
-__/__ Description __/__
+__/__ Description __/___
  
 Animate the depth of an object in camera space.
 Intended as a tweaker tool for later anim stages where timings have been established.
@@ -9,7 +9,7 @@ Although the tool is called "Closer to camera", untruthfully to it's name, you c
 It works best by selecting one controller as the target. However, the tool supports multi-controller selections by calculating the mid point of the controllers.
 
    ___________________
-__/__ Installation __/__
+__/__ Installation __/___
  
 Copy the script file into your maya scripts directory, for example:
 C:\Users\YourUser\Documents\maya\scripts\emi_closerToCamera.py
@@ -21,7 +21,7 @@ import emi_closerToCamera
 emi_closerToCamera.ui()
 
    ____________
-__/__License__/__
+__/__License__/___
 
 Copyright 2022 Emily Lim Sarrias
 
