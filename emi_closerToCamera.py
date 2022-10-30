@@ -14,7 +14,6 @@ red = [0.4, 0.0, 0.0]
 darkGrey = [0.25, 0.25, 0.25]
 lightGrey = [0.365, 0.365, 0.365]
 
-
 def field_add(txt_field, x):
     sel= cmds.ls(sl=True)
     if not sel:
@@ -46,37 +45,43 @@ def create_list():
     else: lista = average_points()        
     lista.insert(0, cmds.textField("TF01", q=True, text=1))
     return lista
-    
+
+def add_implicit_str_attr(ctrl, i):
+    cmds.addAttr(ctrl, longName="implicit", dataType="string", ct="emi_closerToCamera") 
+    cmds.setAttr(ctrl+ ".implicit", i, type="string", lock=True)
+
+
 def average_points():
     selection = list(loadObjects)
     master = cmds.spaceLocator(name= "scaleOffset_"+ selection[0])
     babies=[]
-    
     for i in selection:
         child= cmds.spaceLocator(name="scaleLoc_offset_"+ i)
+        add_implicit_str_attr(child[0], i)
         babies.append(child[0])        
         cmds.parentConstraint(i, child, mo=False)
         cmds.parentConstraint(i, master, mo=False)
-
-    cmds.bakeResults(master, simulation=True, at=["tx","ty","tz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=True);
+    
+    cmds.bakeResults(master, at=["tx","ty","tz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=True);
     
     for i in babies:
         cmds.parent(i, master)
     for i in babies:
         cmds.select(i, add=True)
-        
-    cmds.bakeResults(simulation=True, at=["tx","ty","tz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=True); 
+  
+    cmds.bakeResults(at=["tx","ty","tz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=True); 
     cmds.delete(cmds.listRelatives(master, ad=1, type='parentConstraint'))
     
     for i in babies:
-        cmds.pointConstraint(i, i.replace("scaleLoc_offset_", ""), name="scaleToCamera_" +i + "_pointConstraint", mo=True)
-    cmds.group(master, name= "scaleOffset_"+ selection[0]+ "_GRP")
+        cmds.pointConstraint(i, implicit(i), name="scaleToCamera_" +i + "_pointConstraint", mo=True)
+
     return master          
 
 def scale_to_camera():
     
     if check_list():
         lista = create_list()
+        cam=[]
         locators =[]
         
         for i in lista:
@@ -86,28 +91,33 @@ def scale_to_camera():
                 cmds.xform(locator, ws=True, translation=objPosition)
                 cmds.pointConstraint(i, locator, mo=True)
                 cmds.orientConstraint(i, locator, mo=False)
-                locators.append(locator[0])
+                locators.append(locator[0]); cam.append(locator[0])
             elif i != lista[0]:
                 locator = cmds.spaceLocator(name= "scaleLoc_" + i)
+                add_implicit_str_attr(locator[0], i)
                 cmds.addAttr(locator, longName="ScaleToCamera", niceName="Scale to Camera", at= "float", dv=1, min=0, hnv=True, hxv=False, readable=True, keyable=True, hidden=False)
                 cmds.connectAttr(locator[0]+'.ScaleToCamera', locators[0]+'.sx')
                 cmds.connectAttr(locator[0]+'.ScaleToCamera', locators[0]+'.sy')
                 cmds.connectAttr(locator[0]+'.ScaleToCamera', locators[0]+'.sz')
+
                 cmds.pointConstraint(i, locator, mo=False)
                 cmds.parent(locator, locators[0])
+
                 locators.append(locator[0])
         
         for i in locators:
             cmds.select(i, add=True);        
-        cmds.bakeResults(simulation=True, at=["tx","ty","tz","rx","ry","rz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=False);
+        cmds.bakeResults(at=["tx","ty","tz","rx","ry","rz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=False);
         cmds.delete(cmds.listRelatives(locators[0], allDescendents=True, type='constraint')) 
-        lista.pop(0)
-        
-        for i in lista:
-            cmds.pointConstraint("scaleLoc_" + i, i, name="scaleToCamera_" +i + "_pointConstraint", mo=True)
-        cmds.textScrollList("TSL01", edit=True, append=[str(locators[1])])        
-        if cmds.objExists(lista[0]+ "_GRP"):
-            cmds.parent(locators[0], lista[0]+ "_GRP") 
+        locators.pop(0)
+
+        for i in locators:
+            cmds.pointConstraint(i, implicit(i), name="scaleToCamera_" +i + "_pointConstraint", mo=True)
+
+        if lista[1].find("scaleOffset_") >= 0: 
+            cmds.group (lista[1], cam[0], name= "closer_to_camera_setup###")
+
+        cmds.textScrollList("TSL01", edit=True, append=[str(locators[0])])
                    
 def refresh_STL():
     cmds.textScrollList("TSL01", edit=True, removeAll=True)
@@ -125,6 +135,27 @@ def cleanup():
 
 def check_select():
     return(cmds.textScrollList("TSL01", query=True, selectItem=True))[0]
+
+def implicit(n):
+    return(cmds.getAttr(n+ ".implicit"))
+
+def get_ctrl(n):
+    getCtrl=[]
+    getCtrl.append(implicit(n))
+    if getCtrl[0].find("scaleOffset_") >= 0:
+        getCtrl= cmds.ls(cmds.listRelatives(getCtrl[0]), exactType='transform')
+        for i in getCtrl: getCtrl[getCtrl.index(i)]= implicit(i)
+    return getCtrl
+
+def getTop(node):
+    topNode = ''
+    par = cmds.listRelatives(node, p=True)
+    if par != None:
+        topNode = getTop(par)
+        node = par[0]
+        return topNode
+    else:
+        return node  
 
 def update_slider():
     attr_val = cmds.getAttr(check_select()+ '.ScaleToCamera')
@@ -151,25 +182,7 @@ def set_zero_key():
 def delete_setup(item):
     cmds.delete(getTop(item))
     refresh_STL()
-    
-def getTop(node):
-    topNode = ''
-    par = cmds.listRelatives(node, p=True)
-    if par != None:
-        topNode = getTop(par)
-        node = par[0]
-        return topNode
-    else:
-        return node  
-         
-def get_ctrl(n):
-    getCtrl=[]
-    getCtrl.append(implicit(n))
-    if getCtrl[0].find("scaleOffset_") >= 0:
-        getCtrl= cmds.ls(cmds.listRelatives(getCtrl[0]), exactType='transform')
-        for i in getCtrl: getCtrl[getCtrl.index(i)]= i.replace("scaleLoc_offset_", "")
-    return getCtrl
-    
+                
 def bake():
     save = check_select()
     cmds.select(clear=True)
@@ -177,10 +190,7 @@ def bake():
     cmds.bakeResults( attribute=["tx","ty","tz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=True, preserveOutsideKeys=True, bakeOnOverrideLayer=True)
     delete_setup(save)   
     refresh_STL()
-
-def implicit(n):
-    return(n.replace("scaleLoc_", ""))
-            
+          
 def pointAttr():
     point= cmds.listConnections(implicit(check_select()), type='pointConstraint')[0]
     try: check_select().index(":"); attrStr= check_select().rsplit(":", 1)[1]
