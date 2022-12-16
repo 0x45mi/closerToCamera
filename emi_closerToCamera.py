@@ -86,7 +86,7 @@ def scale_to_camera():
         
         for i in lista:
             if i == lista[0]:
-                locator = cmds.spaceLocator(name= "scaleLoc_cam_" + i+ "##")
+                locator = cmds.spaceLocator(name= "scaleLoc_cam_" + "##")
                 objPosition = cmds.xform(i, q=True,t=True,ws=True)
                 cmds.xform(locator, ws=True, translation=objPosition)
                 cmds.pointConstraint(i, locator, mo=True)
