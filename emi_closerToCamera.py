@@ -1,8 +1,17 @@
+'''
+Closer to camera 3.2 
+
+More info on the github project: https://github.com/0x45mi/closerToCamera
+Tutorial: https://vimeo.com/765705742
+'''
+
 import maya.cmds as cmds
 import maya.mel as mm
 
 loadObjects = set()
+layersCB = False
 
+            
 start = cmds.playbackOptions( q=True, min=True )
 end  = cmds.playbackOptions( q=True, max=True )
 
@@ -19,6 +28,8 @@ def field_add(txt_field, x):
     if not sel:
         raise RuntimeError("Please select objects to load")
     if x == 1:
+        if cmds.nodeType(sel[0]) != "transform":
+            sel= cmds.listRelatives(parent=True)
         cmds.textField(txt_field, edit=True, tx=sel[0], backgroundColor=green)
     else:
         global loadObjects
@@ -62,14 +73,14 @@ def average_points():
         cmds.parentConstraint(i, child, mo=False)
         cmds.parentConstraint(i, master, mo=False)
     
-    cmds.bakeResults(master, at=["tx","ty","tz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=True);
+    cmds.bakeResults(master, simulation=layersCB, at=["tx","ty","tz","rx","ry","rz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=True);
     
     for i in babies:
         cmds.parent(i, master)
     for i in babies:
         cmds.select(i, add=True)
   
-    cmds.bakeResults(at=["tx","ty","tz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=True); 
+    cmds.bakeResults(simulation=layersCB, at=["tx","ty","tz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=True); 
     cmds.delete(cmds.listRelatives(master, ad=1, type='parentConstraint'))
     
     for i in babies:
@@ -80,6 +91,10 @@ def average_points():
 def scale_to_camera():
     
     if check_list():
+        
+        if layersCB:
+            cmds.ogs(pause=True)
+        
         lista = create_list()
         cam=[]
         locators =[]
@@ -107,7 +122,7 @@ def scale_to_camera():
         
         for i in locators:
             cmds.select(i, add=True);        
-        cmds.bakeResults(at=["tx","ty","tz","rx","ry","rz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=False);
+        cmds.bakeResults(simulation=layersCB, at=["tx","ty","tz","rx","ry","rz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=False);
         cmds.delete(cmds.listRelatives(locators[0], allDescendents=True, type='constraint')) 
         locators.pop(0)
 
@@ -118,7 +133,10 @@ def scale_to_camera():
             cmds.group (lista[1], cam[0], name= "closer_to_camera_setup###")
 
         cmds.textScrollList("TSL01", edit=True, append=[str(locators[0])])
-                   
+        
+        if layersCB:
+            cmds.ogs(pause=True)
+
 def refresh_STL():
     cmds.textScrollList("TSL01", edit=True, removeAll=True)
     cmds.button("B04", edit=True, label="Toggle", enableBackground=True, backgroundColor=lightGrey)
@@ -187,7 +205,11 @@ def bake():
     save = check_select()
     cmds.select(clear=True)
     for i in get_ctrl(check_select()): cmds.select(i, add=True)
-    cmds.bakeResults( attribute=["tx","ty","tz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=True, preserveOutsideKeys=True, bakeOnOverrideLayer=True)
+    if layersCB:
+            cmds.ogs(pause=True)
+    cmds.bakeResults(simulation=layersCB, attribute=["tx","ty","tz"], time=(start,end), animation="objects", sampleBy=1.0, disableImplicitControl=True, preserveOutsideKeys=True, bakeOnOverrideLayer=True)
+    if layersCB:
+            cmds.ogs(pause=True)
     delete_setup(save)   
     refresh_STL()
           
@@ -223,7 +245,9 @@ def enable_disable():
         for i in blendAttr():
             cmds.setAttr(i, 1)
         cmds.button("B04", edit=True, label="Control ON", enableBackground=True, backgroundColor=green)
- 
+
+def updatelayersCB():
+    layersCB = cmds.menuItem("Layers", q=True, checkBox=True) 
     
 #_________________UI__________________#
 
@@ -253,6 +277,7 @@ def ui():
     cmds.popupMenu()
     cmds.menuItem('Refresh', command=lambda *x:refresh_STL())
     cmds.menuItem('Cleanup', command=lambda *x:cleanup())
+    cmds.menuItem('Layers', checkBox=(0), command=lambda *x:updatelayersCB())
 
     cmds.setParent( '..' )
     cmds.rowLayout(numberOfColumns=4, columnWidth4=(24, 350, 20, 24), adjustableColumn=2, columnAlign=(1, 'center'), columnAttach=[(1, 'left', 4), (2, 'both', 2), (3, 'both', 0), (4, 'right', 2)] )
