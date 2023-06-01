@@ -7,6 +7,8 @@ Intended as a tweaker tool for later anim stages where timings have been establi
 
 It works best by selecting one controller as the target. The tool supports multi-controller selections by calculating the mid point of the controllers.<br />
 
+If you see the bake is not working well, there is a right click option called "layers". This option will make the bake a bit slower but it should be accurate.<br />
+
 [Ckeck out the tool's video tutorial](https://vimeo.com/765705742)
 ### Installation
 
