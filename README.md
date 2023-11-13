@@ -3,7 +3,7 @@
 ### Description
 
 Animate the depth of an object in camera space. <br />
-Intended as a tweaker tool for later anim stages where timings have been established.
+I have also found use for it to clean spacings in camera space as the baked tx and ty curves correspond to x and y spacing in the camera view. <br />
 
 It works best by selecting one controller as the target. The tool supports multi-controller selections by calculating the mid point of the controllers.<br />
 
