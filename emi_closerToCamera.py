@@ -1,15 +1,18 @@
 '''
-Closer to camera 3.2 
+Closer to camera 3.3
 
 More info on the github project: https://github.com/0x45mi/closerToCamera
 Tutorial: https://vimeo.com/765705742
+
+### Changelog
+03/01/2024 - Changed default bake to simulation=True, as this is safer.
 '''
 
 import maya.cmds as cmds
 import maya.mel as mm
 
 loadObjects = set()
-layersCB = False
+layersCB = True
 
             
 start = cmds.playbackOptions( q=True, min=True )
@@ -277,7 +280,7 @@ def ui():
     cmds.popupMenu()
     cmds.menuItem('Refresh', command=lambda *x:refresh_STL())
     cmds.menuItem('Cleanup', command=lambda *x:cleanup())
-    cmds.menuItem('Layers', checkBox=(0), command=lambda *x:updatelayersCB())
+    cmds.menuItem('Layers', checkBox=(1), command=lambda *x:updatelayersCB())
 
     cmds.setParent( '..' )
     cmds.rowLayout(numberOfColumns=4, columnWidth4=(24, 350, 20, 24), adjustableColumn=2, columnAlign=(1, 'center'), columnAttach=[(1, 'left', 4), (2, 'both', 2), (3, 'both', 0), (4, 'right', 2)] )
